@@ -1,7 +1,7 @@
 ---
 title: "OP_analysis"
 knit: (function(input_file, encoding) {
-  out_dir <- 'knit_output';
+  out_dir <- 'knitr_output';
   rmarkdown::render(input_file,
  encoding=encoding,
  output_file=file.path(dirname(input_file), out_dir, 'OP_analysis.html'))})
