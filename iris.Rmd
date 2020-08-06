@@ -1,0 +1,91 @@
+---
+title: "Knitr_test"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+    theme: journal
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+library(tidyverse)
+library(kableExtra)
+library(knitr)
+library(ggplot2)
+library(gridExtra)
+library(gt)
+```
+
+# For Loop Formatting
+
+## Toggle between `{r}` and `{r results = 'asis'}` to see different Rmarkdown outputs
+```{r results='asis'}
+#function to be used in loop. Includes ggplot and df output
+iris_plotter <- function(species, petal_width, result = "both") {
+  
+  iplot <- iris %>% 
+    filter(Species == species, Petal.Width == petal_width) %>% 
+    ggplot(aes(x = Petal.Length, y = Sepal.Width)) + geom_point()
+  
+  df <- layer_data(iplot, i = 1L) %>% 
+    select(x,y)
+  
+  if(result == "table"){
+    gt_df <- df %>% 
+      kable()
+    
+      print(gt_df)
+  }
+  if(result == "plot"){
+    print(iplot)
+  }
+  if(result == "both"){
+    print(iplot)
+    df
+  }
+}
+
+#For the sake of this example and to prevent excessive lopping, I have shortened the input into the loop
+species_short <- c("setosa")
+petal_width_short <- c(0.2, 0.4, 0.3)
+
+for (i in species_short) {
+  cat("  \n##", i, "{.tabset}", "  \n")
+  for (j in petal_width_short) {
+    cat("  \n###", j, "  \n")
+    iris_plotter(i, j, "plot")
+    cat("  \n")
+    iris_plotter(i,j, "table")
+  }
+}
+```
+
+
+# Manual Formatting
+
+## setosa {.tabset}
+
+### 0.2
+```{r}
+iris_plotter("setosa", 0.2)
+```
+
+### 0.4
+```{r}
+iris_plotter("setosa", 0.4)
+```
+
+### 0.3
+```{r}
+iris_plotter("setosa", 0.3)
+```
+
+
+
+

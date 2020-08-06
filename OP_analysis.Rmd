@@ -1,0 +1,246 @@
+---
+title: "OP_analysis"
+knit: (function(input_file, encoding) {
+  out_dir <- 'knit_output';
+  rmarkdown::render(input_file,
+ encoding=encoding,
+ output_file=file.path(dirname(input_file), out_dir, 'OP_analysis.html'))})
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+    theme: journal
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(knitr.table.format = "html")
+options(repos = c(CRAN = "https://cran.rstudio.com"))
+```
+
+```{r include=FALSE}
+library(tidyverse)
+library(readxl)
+library(filesstrings)
+library(readr)
+library(XLConnect)
+library(magrittr)
+library(rlist)
+library(ggpmisc)
+library(gt)
+library(gtsummary)
+library(kableExtra)
+library(gridExtra)
+library(XML)
+```
+
+
+
+# **Loading, Cleaning, and Tidying the Data**
+
+
+Setting path to Excel files as variables
+```{r}
+ko_path <- "data/OP_KO_Scotopic.xlsx"
+wt_path <- "data/OP_WT_Scotopic.xlsx"
+```
+
+## Creating functions for reading sheets into single df and extracting header names
+
+- Here, every sheet in the workbook is given an "id" (its sheet name) before they are concatenated into one large data frame
+- The first sheet is ignored since it does not adhere to the format of the rest
+- The first column of every sheet is removed since it contains redundant information
+- Ideally, I will not hard code the column range so that this would not break if more columns are added
+
+These header functions take header names from different cells in the orginal excel file and concatenate them
+
+```{r results='hide'}
+#function for getting header information from continuous cells on the original excel spreadsheet
+#from_sheet specifies which sheet to take the headers from in case there is one sheet where the header values are not representative of the rest
+xl_header1 <- function(path, header_range, from_sheet) {
+    header_names <- read_excel(path = path, range = header_range, sheet = from_sheet)
+    names(header_names)
+}
+
+#function for dropping sheets from the workbook, setting range, concatenating remaining sheets into single df
+xl_concat <- function(path, sheet_rm, range, col_names) {
+  path %>% 
+    excel_sheets() %>% 
+    list.remove(sheet_rm) %>% 
+    purrr::set_names() %>% 
+    map_df(~ read_excel(path = path, sheet = .x, range = range, col_names = col_names), .id = "sheet")
+}
+
+
+#Applying the function above to acquire header names and concatenate. 
+mouse_names <- xl_header1(ko_path,"E1:U1",3)
+stat_names <- xl_header1(ko_path,"B2:D2",3)
+final_header <- append(stat_names,mouse_names)
+
+final_header <- final_header %>% 
+  str_replace("^\\.+", NA_character_)
+
+last <- tail(final_header,1)
+
+final_header <- append(final_header,last)  
+
+#replacing all NA values from empty cells with mouse names to preserve duplicates for "Left" and "Right"  
+final_header <- final_header %>% 
+  tibble() %>% 
+  mutate(zoo::na.locf0(final_header)) %>% 
+  pull()
+
+#building preliminary df
+ko_sheets <- xl_concat(ko_path, c(1,2),"B2:V1822", final_header)
+```
+
+## Handling multi-header layout and building the data frame
+
+- When imported into a data frame, this data set has 2 headers
+  + **Header 1**: Mouse code names (i.e. 051, 049, 061...)
+  + **Header 2**: Time, Mean, SEM, and mouse eyes (Left vs Right)
+  
+This code combines the two headers of the data set into one while merging "Left" and "Right" names with the appropriate mouse
+```{r}
+row1 <-as.list(ko_sheets[1,])
+row1 <- row1[-1]
+
+ncols <- length(row1)
+
+for (n in 1:ncols){
+  if(row1[n] == "Left" | row1[n] == "Right"){
+    as.character(final_header, row1)
+    final_header[n] <- paste0(final_header[n],sep = "_", row1[n])
+    
+  }
+}
+
+#building final data frame
+ko_sheets <- xl_concat(ko_path, c(1,2),"B2:V1822", final_header)
+head(ko_sheets)
+
+```
+
+
+## Tidying the Data
+
+First, we have to eliminate all rows in the df that are filled with extra header names
+
+- For every sheet imported, there is a row with the values "time", "mean", "SEM". These rows can be removed
+
+```{r}
+#removing extra header rows
+ko_sheets <- ko_sheets %>% 
+  filter(!Time == "Time")
+```
+
+Now we must gather the data to make variables for `eye` and `mouse` 
+
+```{r}
+#index the first column to which we want to apply pivot_longer (the first col with mouse name in it)
+headers <- as.list(names(ko_sheets))
+ncols <- ncol(ko_sheets)
+start_col <- which(str_detect(headers, "_")) %>% 
+  first()
+
+ko_sheets <- ko_sheets %>% 
+  pivot_longer(cols = start_col:ncols, names_to = c("mouse", "eye"), values_to = "response", names_sep = "_") %>% 
+  mutate(response = as.double(response),
+         SEM = as.double(SEM),
+         Mean = as.double(Mean),
+         Time = as.integer(Time),
+         eye = as.factor(eye),
+         mouse = as.factor(mouse)
+         )
+ko_sheets
+```
+
+
+# **Building Function for Finding Local Maxima and Minima**
+
+Employing the `stat_peak` function to detect local extrema. Excludes peaks and valleys that are within 10 peaks of the highest/lowest 
+
+- The `mouse_grapher` function plots the local extrema on the OP data
+
+  + The arguments `span` and `threshold` control the thresholding parameters of the extrema detection
+```{r results='asis', warning=FALSE}
+mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, threshold = 0.65, result = "both") {
+  
+  #plot the data and show local extrema
+   mouse_plot <- df %>% 
+    filter(mouse == ms_code , sheet == intensity , Time <= time_window, !is.na(response)) %>% 
+    ggplot(aes(x = Time, y = response)) +
+    geom_line(aes(color = eye), alpha = 0.7) +
+    suppressWarnings(stat_peaks(aes(shape = eye, color = eye),span = span, geom = "point", ignore_threshold = threshold, na.rm = TRUE))+
+    suppressWarnings(stat_peaks(aes(color = eye, shape = eye),
+               na.rm = TRUE,
+               geom = "text", hjust = -0.2, vjust = 0.5, 
+               angle = 90, check_overlap = TRUE, response.label.fmt = "i",
+               span = span, ignore_threshold = threshold,
+               alpha = 0.7))+
+    facet_wrap(~eye, nrow = 2, ncol = 1, scales = "fixed") +
+    ggtitle(ms_code)+ 
+    theme_bw() 
+  
+  #collect the extrema values in a table   
+  OP_max <- layer_data(mouse_plot, i = 2L) %>% 
+    select(x, y, shape) %>% 
+    mutate(eye = case_when(
+      shape == 16 ~ "Left",
+      shape == 17 ~ "Right"
+    )) %>% 
+    select(-shape) %>%
+    kable(
+      caption = paste0("Mouse:", sep = " ", ms_code, "|", sep = " ", "Intensity: ", intensity),
+      align = "c") %>%
+    row_spec(0, bold = TRUE) %>%
+    kable_styling(bootstrap_options = c("striped", "condensed"),
+                  full_width = T,
+                  fixed_thead = T)
+
+  if(result == "plot") {
+  print(mouse_plot)
+  }
+  if(result == "table"){
+  print(OP_max)
+  }
+  if(result == "both"){
+    print(mouse_plot)
+    OP_max
+  }
+}
+```
+
+
+# **Implementing `mouse_grapher` for each mouse and intensity**
+
+## Loop that iterates through all Sheets and Mice
+
+```{r results='asis'}
+#These have been modified for loop testing purposes
+sheets <- as.character(unique(ko_sheets$sheet))
+mice <- as.character(unique(ko_sheets$mouse))
+mice <- mice[!(mice %in% c("141", "113", "138"))]
+
+
+#for loop attempt
+for (i in sheets) {
+  cat("  \n##", i, "{.tabset}", "  \n")
+  for (j in mice) {
+    cat("  \n###", "**Mouse: **", j, "  \n")
+    mouse_grapher(ko_sheets, intensity = i , ms_code = j , span = 9, threshold = 0.62, result = "plot")
+    cat("\n")
+    as.data.frame(mouse_grapher(ko_sheets, intensity = i , ms_code = j , span = 9, threshold = 0.62, result = "table"))
+  }
+}
+```
+
+
+```{r results='asis'}
+mouse_grapher(ko_sheets, intensity = -2.12 , ms_code = "051" , span = 9, threshold = 0.65, result = "table")
+```
+
+
+
