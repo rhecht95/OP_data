@@ -152,8 +152,8 @@ mk_header <- function(xl_path, mouse_range, stat_range, data_range, rm_sheets) {
   xl_concat(xl_path, rm_sheets, data_range, final_header)
 }
 
-test_ko_sheets <- mk_header(ko_path,"E1:U1", "B2:D2", "B2:V1822", rm_sheets = c(1,2))
-test_wt_sheets <- mk_header(wt_path, "E1:R1", "B2:D2", "B2:R1822", rm_sheets = c(1,2))
+# test_ko_sheets <- mk_header(ko_path,"E1:U1", "B2:D2", "B2:V1822", rm_sheets = c(1,2))
+# test_wt_sheets <- mk_header(wt_path, "E1:R1", "B2:D2", "B2:R1822", rm_sheets = c(1,2))
 
 ```
 
