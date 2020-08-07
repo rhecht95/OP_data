@@ -122,7 +122,8 @@ wt_sheets <- mk_header(wt_path, "E1:R1", "B2:D2", "B2:R1822", rm_sheets = c(1,2)
   
 This code combines the two headers of the data set into one while merging "Left" and "Right" names with the appropriate mouse
 ```{r}
-ko_final_header <- names(ko_sheets)
+ko_final_header <- names(ko_sheets) %>% 
+  str_replace("\\..*", "")
 ko_final_header <- ko_final_header[-1]
 
 row1 <-as.list(ko_sheets[1,])
