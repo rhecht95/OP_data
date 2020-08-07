@@ -54,11 +54,11 @@ wt_path <- "data/OP_WT_Scotopic.xlsx"
 - The first column of every sheet is removed since it contains redundant information
 - Ideally, I will not hard code the column range so that this would not break if more columns are added
 
-These header functions take header names from different cells in the orginal excel file and concatenate them
+`mk_header` utlizes `xl_header1` and `xl_concat` to contruct a preliminary data frame by pulling header titles from two different rows within the excel file
 
-*These functions are performed separately on wt and ko data*
 
-```{r results='hide'}
+
+```{r echo=T, results='hide'}
 #function for getting header information from continuous cells on the original excel spreadsheet
 #from_sheet specifies which sheet to take the headers from in case there is one sheet where the header values are not representative of the rest
 xl_header1 <- function(path, header_range, from_sheet) {
@@ -120,29 +120,43 @@ wt_sheets <- mk_header(wt_path, "E1:R1", "B2:D2", "B2:R1822", rm_sheets = c(1,2)
   + **Header 1**: Mouse code names (i.e. 051, 049, 061...)
   + **Header 2**: Time, Mean, SEM, and mouse eyes (Left vs Right)
   
-This code combines the two headers of the data set into one while merging "Left" and "Right" names with the appropriate mouse
+`one_header` combines the two headers of the data set into one while merging "Left" and "Right" names with the appropriate mouse
+
+- use this function to re-write the name of the df used previously (e.g. "ko_sheets", "wt_sheets")
+
 ```{r}
-ko_final_header <- names(ko_sheets) %>% 
-  str_replace("\\..*", "")
-ko_final_header <- ko_final_header[-1]
-
-row1 <-as.list(ko_sheets[1,])
-row1 <- row1[-1]
-
-ncols <- length(row1)
-
-for (n in 1:ncols){
+one_header <- function(df, xl_path, rm_sheets, data_range) {
+  
+  #get rid of the "..." in the mouse names
+  final_header <- names(df) %>% 
+    str_replace("\\..*", "")
+  
+  #accounts for the addition of the "sheet" column not in the excel file
+  final_header <- final_header[-1]
+  
+  #setting up list for the loop ahead
+  row1 <-as.list(df[1,])
+  row1 <- row1[-1]
+  ncols <- length(row1)
+  
+  #take the "left" and "right" designations from the second row and append them to the header name in first row
+  for (n in 1:ncols){
   if(row1[n] == "Left" | row1[n] == "Right"){
-    as.character(ko_final_header, row1)
-    ko_final_header[n] <- paste0(ko_final_header[n],sep = "_", row1[n])
+    as.character(final_header, row1)
+    final_header[n] <- paste0(final_header[n],sep = "_", row1[n])
+    }
   }
+  
+  xl_concat(xl_path, rm_sheets, data_range, final_header)
 }
 
-#building final data frame
-ko_sheets <- xl_concat(ko_path, c(1,2),"B2:V1822", ko_final_header)
+#contructing final data frames
+ko_sheets <- one_header(ko_sheets, ko_path, c(1,2),"B2:V1822")
 head(ko_sheets)
-```
 
+wt_sheets <- one_header(wt_sheets, wt_path, c(1,2),"B2:R1822" )
+head(wt_sheets)
+```
 
 ## Tidying the Data
 
