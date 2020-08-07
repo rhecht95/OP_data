@@ -123,6 +123,7 @@ wt_sheets <- mk_header(wt_path, "E1:R1", "B2:D2", "B2:R1822", rm_sheets = c(1,2)
 This code combines the two headers of the data set into one while merging "Left" and "Right" names with the appropriate mouse
 ```{r}
 ko_final_header <- names(ko_sheets)
+ko_final_header <- ko_final_header[-1]
 
 row1 <-as.list(ko_sheets[1,])
 row1 <- row1[-1]
@@ -133,14 +134,12 @@ for (n in 1:ncols){
   if(row1[n] == "Left" | row1[n] == "Right"){
     as.character(ko_final_header, row1)
     ko_final_header[n] <- paste0(ko_final_header[n],sep = "_", row1[n])
-    
   }
 }
 
 #building final data frame
 ko_sheets <- xl_concat(ko_path, c(1,2),"B2:V1822", ko_final_header)
 head(ko_sheets)
-
 ```
 
 
