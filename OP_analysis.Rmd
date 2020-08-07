@@ -75,52 +75,6 @@ xl_concat <- function(path, sheet_rm, range, col_names) {
     map_df(~ read_excel(path = path, sheet = .x, range = range, col_names = col_names), .id = "sheet")
 }
 
-
-#Step 1:Acquire header names for KO data 
-ko_mouse_names <- xl_header1(ko_path,"E1:U1",3)
-ko_stat_names <- xl_header1(ko_path,"B2:D2",3)
-ko_final_header <- append(ko_stat_names,ko_mouse_names)
-
-#Step 1:Acquire header names for WT data
-wt_mouse_names <- xl_header1(wt_path,"E1:R1",3)
-wt_stat_names <- xl_header1(wt_path,"B2:D2",3)
-wt_final_header <- append(wt_stat_names,wt_mouse_names)
-
-
-#Step 2:get rid of false mouse names that start with "..." . KO data
-#For ko data, there was no NA after last mouse name, so had to append it on with `ko_last`
-ko_final_header <- ko_final_header %>% 
-  str_replace("^\\.+", NA_character_)
-ko_last <- tail(ko_final_header,1)
-ko_final_header <- append(ko_final_header,ko_last)  
-
-#Step 2:get rid of false mouse names that start with "..." . WT data
-wt_final_header <- wt_final_header %>% 
-  str_replace("^\\.+", NA_character_)
-
-
-
-
-#Step 3: replacing all NA values from empty cells with mouse names to preserve duplicates for "Left" and "Right" eyes
-ko_final_header <- ko_final_header %>% 
-  tibble() %>% 
-  mutate(zoo::na.locf0(ko_final_header)) %>% 
-  pull()
-
-#Step 3: same for wt
-wt_final_header <- wt_final_header %>% 
-  tibble() %>% 
-  mutate(zoo::na.locf0(wt_final_header)) %>% 
-  pull()
-
-#building preliminary df
-ko_sheets <- xl_concat(ko_path, c(1,2),"B2:V1822", ko_final_header)
-wt_sheets <- xl_concat(wt_path, c(1,2),"B2:R1822", wt_final_header)
-```
-
-## TEST: function consolidation
-
-```{r}
 mk_header <- function(xl_path, mouse_range, stat_range, data_range, rm_sheets) {
   
   #gather header names for mice and statistics
@@ -132,29 +86,31 @@ mk_header <- function(xl_path, mouse_range, stat_range, data_range, rm_sheets) {
   #if last element of final header doesnt end in NA, duplicate last element
   #replace any mouse names that begin with "..." with NA
   
-  last_element <- tail(final_header,1)
-  if(!is.na(last_element)){
-   final_header <- final_header %>% 
+  final_header <- final_header %>% 
     str_replace("^\\.+", NA_character_)
+  
+  last_element <- tail(final_header,1)
+  
+  if(!is.na(last_element)){
     final_header <- append(final_header,last_element)
   }
   else {
-    final_header <- final_header %>% 
-      str_replace("^\\.+", NA_character_)
+    final_header <- final_header
   }
   
   #replace all NA values with the mouse name that preceeds it. Allows duplication for left and right eyes
-  final_header <- final_header %>% 
-    tibble() %>% 
-    mutate(zoo::na.locf0(final_header)) %>% 
+  final_header <- final_header %>%
+    tibble() %>%
+    mutate(zoo::na.locf0(final_header)) %>%
     pull()
   
   xl_concat(xl_path, rm_sheets, data_range, final_header)
 }
 
-# test_ko_sheets <- mk_header(ko_path,"E1:U1", "B2:D2", "B2:V1822", rm_sheets = c(1,2))
-# test_wt_sheets <- mk_header(wt_path, "E1:R1", "B2:D2", "B2:R1822", rm_sheets = c(1,2))
 
+#building preliminary df
+ko_sheets <- mk_header(ko_path,"E1:U1", "B2:D2", "B2:V1822", rm_sheets = c(1,2))
+wt_sheets <- mk_header(wt_path, "E1:R1", "B2:D2", "B2:R1822", rm_sheets = c(1,2))
 ```
 
 
@@ -166,6 +122,8 @@ mk_header <- function(xl_path, mouse_range, stat_range, data_range, rm_sheets) {
   
 This code combines the two headers of the data set into one while merging "Left" and "Right" names with the appropriate mouse
 ```{r}
+ko_final_header <- names(ko_sheets)
+
 row1 <-as.list(ko_sheets[1,])
 row1 <- row1[-1]
 
