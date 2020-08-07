@@ -160,35 +160,37 @@ head(wt_sheets)
 
 ## Tidying the Data
 
-First, we have to eliminate all rows in the df that are filled with extra header names
+`tidy_mouse` is a tidying function that performs the following operations:
 
-- For every sheet imported, there is a row with the values "time", "mean", "SEM". These rows can be removed
-
-```{r}
-#removing extra header rows
-ko_sheets <- ko_sheets %>% 
-  filter(!Time == "Time")
-```
-
-Now we must gather the data to make variables for `eye` and `mouse` 
+1. **Remove** all repeat header rows with no data (inlude the word "time")
+2. **Use** `pivot_longer` to gather the data and separate single headers into multiple variables
 
 ```{r}
-#index the first column to which we want to apply pivot_longer (the first col with mouse name in it)
-headers <- as.list(names(ko_sheets))
-ncols <- ncol(ko_sheets)
-start_col <- which(str_detect(headers, "_")) %>% 
+tidy_mouse <- function(df) {
+  
+  df <- df %>% 
+    filter(!Time == "Time")
+  
+  headers <- as.list(names(df))
+  ncols <- ncol(df)
+  start_col <- which(str_detect(headers, "_")) %>% 
   first()
 
-ko_sheets <- ko_sheets %>% 
-  pivot_longer(cols = start_col:ncols, names_to = c("mouse", "eye"), values_to = "response", names_sep = "_") %>% 
-  mutate(response = as.double(response),
-         SEM = as.double(SEM),
-         Mean = as.double(Mean),
-         Time = as.integer(Time),
-         eye = as.factor(eye),
-         mouse = as.factor(mouse)
-         )
-ko_sheets
+  df <- df %>% 
+    pivot_longer(cols = start_col:ncols, names_to = c("mouse", "eye"), values_to = "response", names_sep = "_") %>% 
+    mutate(response = as.double(response),
+           SEM = as.double(SEM),
+           Mean = as.double(Mean),
+           Time = as.integer(Time),
+           eye = as.factor(eye),
+           mouse = as.factor(mouse)
+           )
+  df
+}
+
+ko_sheets <- tidy_mouse(ko_sheets)
+wt_sheets <- tidy_mouse(wt_sheets)
+
 ```
 
 
