@@ -193,6 +193,13 @@ wt_sheets <- tidy_mouse(wt_sheets)
 
 ```
 
+## Combining Tidy Data Frames Before Plotting
+
+Using `bind_rows` to preserve all columns
+```{r}
+wt_ko_sheets <- bind_rows("ko_sheets" = ko_sheets, "wt_sheets" = wt_sheets, .id = "df_source")
+wt_ko_sheets
+```
 
 # **Building Function for Finding Local Maxima and Minima**
 
@@ -216,13 +223,13 @@ mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, t
                angle = 90, check_overlap = TRUE, response.label.fmt = "i",
                span = span, ignore_threshold = threshold,
                alpha = 0.7))+
-    facet_wrap(~eye, nrow = 2, ncol = 1, scales = "fixed") +
+    facet_wrap(vars(df_source,eye), nrow = 2, ncol = 2, scales = "fixed") +
     ggtitle(ms_code)+ 
     theme_bw() 
   
   #collect the extrema values in a table   
   OP_max <- layer_data(mouse_plot, i = 2L) %>% 
-    select(x, y, shape) %>% 
+    #select(x, y, shape) %>% 
     mutate(eye = case_when(
       shape == 16 ~ "Left",
       shape == 17 ~ "Right"
@@ -248,6 +255,13 @@ mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, t
   }
 }
 ```
+
+## Practice Plot
+
+```{r}
+mouse_grapher(wt_ko_sheets, -4.14, "049")
+```
+
 
 
 # **Implementing `mouse_grapher` for each mouse and intensity**
