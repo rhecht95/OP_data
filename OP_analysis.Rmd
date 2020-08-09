@@ -216,25 +216,31 @@ mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, t
     filter(mouse == ms_code , sheet == intensity , Time <= time_window, !is.na(response)) %>% 
     ggplot(aes(x = Time, y = response)) +
     geom_line(aes(color = eye), alpha = 0.7) +
-    suppressWarnings(stat_peaks(aes(shape = eye, color = eye),span = span, geom = "point", ignore_threshold = threshold, na.rm = TRUE))+
+    suppressWarnings(stat_peaks(aes(shape = eye, color = eye, size = df_source),
+                                span = span, geom = "point", ignore_threshold = threshold, na.rm = TRUE))+
     suppressWarnings(stat_peaks(aes(color = eye, shape = eye),
                na.rm = TRUE,
                geom = "text", hjust = -0.2, vjust = 0.5, 
                angle = 90, check_overlap = TRUE, response.label.fmt = "i",
                span = span, ignore_threshold = threshold,
                alpha = 0.7))+
-    facet_wrap(vars(df_source,eye), nrow = 2, ncol = 2, scales = "fixed") +
+    scale_size_manual(values = c(1.5, 1.51)) +
+    facet_grid(eye ~ df_source, scales = "fixed", as.table = TRUE) +
     ggtitle(ms_code)+ 
     theme_bw() 
   
   #collect the extrema values in a table   
   OP_max <- layer_data(mouse_plot, i = 2L) %>% 
-    #select(x, y, shape) %>% 
+    select(x, y, shape, size) %>% 
     mutate(eye = case_when(
       shape == 16 ~ "Left",
-      shape == 17 ~ "Right"
-    )) %>% 
-    select(-shape) %>%
+      shape == 17 ~ "Right"),
+           df_source = case_when(
+      size == 1.5 ~ "KO",
+      size == 1.51 ~ "WT"
+           )) %>%
+    select(-shape, -size) %>%
+    arrange(df_source) %>% 
     kable(
       caption = paste0("Mouse:", sep = " ", ms_code, "|", sep = " ", "Intensity: ", intensity),
       align = "c") %>%
@@ -256,13 +262,6 @@ mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, t
 }
 ```
 
-## Practice Plot
-
-```{r}
-mouse_grapher(wt_ko_sheets, -4.14, "049")
-```
-
-
 
 # **Implementing `mouse_grapher` for each mouse and intensity**
 
@@ -280,17 +279,14 @@ for (i in sheets) {
   cat("  \n##", i, "{.tabset}", "  \n")
   for (j in mice) {
     cat("  \n###", "**Mouse: **", j, "  \n")
-    mouse_grapher(ko_sheets, intensity = i , ms_code = j , span = 9, threshold = 0.62, result = "plot")
+    mouse_grapher(wt_ko_sheets, intensity = i , ms_code = j , span = 9, threshold = 0.62, result = "plot")
     cat("\n")
-    as.data.frame(mouse_grapher(ko_sheets, intensity = i , ms_code = j , span = 9, threshold = 0.62, result = "table"))
+    as.data.frame(mouse_grapher(wt_ko_sheets, intensity = i , ms_code = j , span = 9, threshold = 0.62, result = "table"))
   }
 }
 ```
 
 
-```{r results='asis'}
-mouse_grapher(ko_sheets, intensity = -2.12 , ms_code = "051" , span = 9, threshold = 0.65, result = "table")
-```
 
 
 
