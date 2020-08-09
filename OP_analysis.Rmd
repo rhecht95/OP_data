@@ -240,20 +240,20 @@ mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, t
       size == 1.51 ~ "WT"
            )) %>%
     select(-shape, -size) %>%
-    arrange(df_source) %>% 
-    kable(
-      caption = paste0("Mouse:", sep = " ", ms_code, "|", sep = " ", "Intensity: ", intensity),
-      align = "c") %>%
-    row_spec(0, bold = TRUE) %>%
-    kable_styling(bootstrap_options = c("striped", "condensed"),
-                  full_width = T,
-                  fixed_thead = T)
+    arrange(df_source)
+    # kable(
+    #   caption = paste0("Mouse:", sep = " ", ms_code, "|", sep = " ", "Intensity: ", intensity),
+    #   align = "c") %>%
+    # row_spec(0, bold = TRUE) %>%
+    # kable_styling(bootstrap_options = c("striped", "condensed"),
+    #               full_width = T,
+    #               fixed_thead = T)
 
   if(result == "plot") {
   print(mouse_plot)
   }
   if(result == "table"){
-  print(OP_max)
+  return(OP_max)
   }
   if(result == "both"){
     print(mouse_plot)
@@ -275,18 +275,24 @@ mice <- mice[!(mice %in% c("141", "113", "138"))]
 
 
 #for loop attempt
-for (i in sheets) {
-  cat("  \n##", i, "{.tabset}", "  \n")
-  for (j in mice) {
-    cat("  \n###", "**Mouse: **", j, "  \n")
-    mouse_grapher(wt_ko_sheets, intensity = i , ms_code = j , span = 9, threshold = 0.62, result = "plot")
-    cat("\n")
-    as.data.frame(mouse_grapher(wt_ko_sheets, intensity = i , ms_code = j , span = 9, threshold = 0.62, result = "table"))
-  }
-}
+# for (i in sheets) {
+#   cat("  \n##", i, "{.tabset}", "  \n")
+#   for (j in mice) {
+#     cat("  \n###", "**Mouse: **", j, "  \n")
+#     mouse_grapher(wt_ko_sheets, intensity = i , ms_code = j , span = 9, threshold = 0.62, result = "plot")
+#     cat("\n")
+#     mouse_grapher(wt_ko_sheets, intensity = i , ms_code = j , span = 9, threshold = 0.62, result = "table")
+#   }
+# }
 ```
 
 
+## Practice paged-tables
+
+```{r results='asis'}
+mouse_grapher(wt_ko_sheets, intensity = -2.12 , ms_code = "051" , span = 9, threshold = 0.62, result = "plot")
+mouse_grapher(wt_ko_sheets, intensity = -2.12 , ms_code = "051" , span = 9, threshold = 0.62, result = "table")
+```
 
 
 
