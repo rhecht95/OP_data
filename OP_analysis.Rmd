@@ -293,7 +293,7 @@ mice <- as.character(unique(wt_ko_sheets$mouse))
 #mice <- mice[!(mice %in% c("141", "113", "138", "145", "078"))]
 
 
-#for loop attempt (FAILS AT INTENSITY p0.6)
+#for loop attempt 
 for (i in sheets) {
   cat("  \n##", i, "{.tabset}", "  \n")
   for (j in mice) {
