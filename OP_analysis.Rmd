@@ -43,8 +43,8 @@ library(XML)
 
 Setting path to Excel files as variables
 ```{r}
-ko_path <- "data/OP_KO_Scotopic.xlsx"
-wt_path <- "data/OP_WT_Scotopic.xlsx"
+ko_path <- "data/OP_KO_scotopic_mod1.xlsx"
+wt_path <- "data/OP_WT_scotopic_mod1.xlsx"
 ```
 
 ## Creating functions for reading sheets into single df and extracting header names
@@ -279,12 +279,20 @@ for (i in sheets) {
   cat("  \n##", i, "{.tabset}", "  \n")
   for (j in mice) {
     cat("  \n###", "**Mouse: **", j, "  \n")
-    mouse_grapher(wt_ko_sheets, intensity = i , ms_code = j , span = 9, threshold = 0.62, result = "plot")
+    mouse_grapher(wt_ko_sheets, intensity = i , ms_code = j , span = 7, threshold = 0.575, time_window = 300, result = "plot")
     cat("\n")
-    as.data.frame(mouse_grapher(wt_ko_sheets, intensity = i , ms_code = j , span = 9, threshold = 0.62, result = "table"))
+    as.data.frame(mouse_grapher(wt_ko_sheets, intensity = i , ms_code = j , span = 7, threshold = 0.575, time_window = 300, result = "table"))
   }
 }
 ```
+
+## Practice Threshold
+
+```{r}
+# mouse_grapher(wt_ko_sheets, intensity = -1.59 , ms_code = "050" , span = 7, threshold = 0.575, time_window = 300, result = "plot")
+# mouse_grapher(wt_ko_sheets, intensity = -1.59 , ms_code = "050" , span = 7, threshold = 0.59, time_window = 300, result = "table")
+```
+
 
 
 
