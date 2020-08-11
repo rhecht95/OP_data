@@ -210,13 +210,22 @@ Employing the `stat_peak` function to detect local extrema. Excludes peaks and v
   + The arguments `span` and `threshold` control the thresholding parameters of the extrema detection
 ```{r results='asis', warning=FALSE}
 mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, threshold = 0.65, result = "both") {
+    
+  source_sheet <- NULL
+   #identify the source sheet
+   if (ms_code %in% ko_sheets$mouse == TRUE) {
+     source_sheet <- "KO"
+   }
+   if (ms_code %in% wt_sheets$mouse){
+     source_sheet <- "WT"
+   }
   
   #plot the data and show local extrema
    mouse_plot <- df %>% 
     filter(mouse == ms_code , sheet == intensity , Time <= time_window, !is.na(response)) %>% 
     ggplot(aes(x = Time, y = response)) +
     geom_line(aes(color = eye), alpha = 0.7) +
-    suppressWarnings(stat_peaks(aes(shape = eye, color = eye, size = df_source),
+    suppressWarnings(stat_peaks(aes(shape = eye, color = eye),
                                 span = span, geom = "point", ignore_threshold = threshold, na.rm = TRUE))+
     suppressWarnings(stat_peaks(aes(color = eye, shape = eye),
                na.rm = TRUE,
@@ -224,25 +233,21 @@ mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, t
                angle = 90, check_overlap = TRUE, response.label.fmt = "i",
                span = span, ignore_threshold = threshold,
                alpha = 0.7))+
-    scale_size_manual(values = c(1.5, 1.51)) +
-    facet_grid(eye ~ df_source, scales = "fixed", as.table = TRUE) +
-    ggtitle(ms_code)+ 
-    theme_bw() 
+    facet_grid(~ eye, scales = "fixed", as.table = TRUE) +
+    ggtitle(ms_code, subtitle = source_sheet)+
+    theme_bw()+
+     theme(plot.title = element_text(size = 15, face = "bold"),
+           plot.subtitle = element_text(face = "italic"))
   
   #collect the extrema values in a table   
   OP_max <- layer_data(mouse_plot, i = 2L) %>% 
-    select(x, y, shape, size) %>% 
+    select(x, y, shape) %>% 
     mutate(eye = case_when(
       shape == 16 ~ "Left",
-      shape == 17 ~ "Right"),
-           df_source = case_when(
-      size == 1.5 ~ "KO",
-      size == 1.51 ~ "WT"
-           )) %>%
-    select(-shape, -size) %>%
-    arrange(df_source) %>% 
+      shape == 17 ~ "Right")) %>%
+    select(-shape) %>%
     kable(
-      caption = paste0("Mouse:", sep = " ", ms_code, "|", sep = " ", "Intensity: ", intensity),
+      caption = paste0("Mouse:", sep = " ", ms_code, "|", sep = " ", "Intensity: ", intensity, "|", sep = " ", "Source: ", source_sheet),
       align = "c") %>%
     row_spec(0, bold = TRUE) %>%
     kable_styling(bootstrap_options = c("striped", "condensed"),
@@ -269,12 +274,12 @@ mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, t
 
 ```{r results='asis'}
 #These have been modified for loop testing purposes
-sheets <- as.character(unique(ko_sheets$sheet))
-mice <- as.character(unique(ko_sheets$mouse))
+sheets <- as.character(unique(wt_ko_sheets$sheet))
+mice <- as.character(unique(wt_ko_sheets$mouse))
 mice <- mice[!(mice %in% c("141", "113", "138"))]
 
 
-#for loop attempt
+#for loop attempt (FAILS AT INTENSITY p0.6)
 for (i in sheets) {
   cat("  \n##", i, "{.tabset}", "  \n")
   for (j in mice) {
@@ -289,8 +294,8 @@ for (i in sheets) {
 ## Practice Threshold
 
 ```{r}
-# mouse_grapher(wt_ko_sheets, intensity = -1.59 , ms_code = "050" , span = 7, threshold = 0.575, time_window = 300, result = "plot")
-# mouse_grapher(wt_ko_sheets, intensity = -1.59 , ms_code = "050" , span = 7, threshold = 0.59, time_window = 300, result = "table")
+mouse_grapher(wt_ko_sheets, intensity = -1.59 , ms_code = "049" , span = 7, threshold = 0.575, time_window = 300, result = "plot")
+mouse_grapher(wt_ko_sheets, intensity = -1.59 , ms_code = "049" , span = 7, threshold = 0.59, time_window = 300, result = "table")
 ```
 
 
