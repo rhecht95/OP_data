@@ -210,15 +210,22 @@ Employing the `stat_peak` function to detect local extrema. Excludes peaks and v
   + The arguments `span` and `threshold` control the thresholding parameters of the extrema detection
 ```{r results='asis', warning=FALSE}
 mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, threshold = 0.65, result = "both") {
-    
+  
+  #identify the source sheet
   source_sheet <- NULL
-   #identify the source sheet
    if (ms_code %in% ko_sheets$mouse == TRUE) {
      source_sheet <- "KO"
    }
    if (ms_code %in% wt_sheets$mouse){
      source_sheet <- "WT"
    }
+  
+  #check to see if mouse has response values before plotting
+  mouse_response <- df %>% 
+    filter(sheet == intensity, mouse == ms_code) %>% 
+    select(response)
+  
+  if (all(!is.na(mouse_response))) {
   
   #plot the data and show local extrema
    mouse_plot <- df %>% 
@@ -264,6 +271,13 @@ mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, t
     print(mouse_plot)
     OP_max
   }
+  
+  
+  }
+  
+  else {
+    print("Mouse has no recorded values")
+  }
 }
 ```
 
@@ -276,7 +290,7 @@ mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, t
 #These have been modified for loop testing purposes
 sheets <- as.character(unique(wt_ko_sheets$sheet))
 mice <- as.character(unique(wt_ko_sheets$mouse))
-mice <- mice[!(mice %in% c("141", "113", "138"))]
+#mice <- mice[!(mice %in% c("141", "113", "138", "145", "078"))]
 
 
 #for loop attempt (FAILS AT INTENSITY p0.6)
@@ -294,8 +308,8 @@ for (i in sheets) {
 ## Practice Threshold
 
 ```{r}
-mouse_grapher(wt_ko_sheets, intensity = -1.59 , ms_code = "049" , span = 7, threshold = 0.575, time_window = 300, result = "plot")
-mouse_grapher(wt_ko_sheets, intensity = -1.59 , ms_code = "049" , span = 7, threshold = 0.59, time_window = 300, result = "table")
+mouse_grapher(wt_ko_sheets, intensity = "p0.6" , ms_code = "078" , span = 7, threshold = 0.575, time_window = 300, result = "plot")
+mouse_grapher(wt_ko_sheets, intensity = "p0.6" , ms_code = "078" , span = 7, threshold = 0.59, time_window = 300, result = "table")
 ```
 
 
