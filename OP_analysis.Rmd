@@ -12,6 +12,7 @@ output:
     toc_depth: 2
     theme: journal
     df_print: paged
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -44,7 +45,10 @@ library(XML)
 Setting path to Excel files as variables
 ```{r}
 ko_path <- "data/OP_KO_scotopic_mod1.xlsx"
+ko_bwave_path <- "/Users/ryanhecht/RStudio/OP_data/data/b-trace_KO scotopic.xlsx"
+  
 wt_path <- "data/OP_WT_scotopic_mod1.xlsx"
+wt_bwave_path <- "/Users/ryanhecht/RStudio/OP_data/data/b-trace_WT_scotopic.xlsx"
 ```
 
 ## Creating functions for reading sheets into single df and extracting header names
@@ -108,9 +112,12 @@ mk_header <- function(xl_path, mouse_range, stat_range, data_range, rm_sheets) {
 }
 
 
-#building preliminary df
+#building preliminary dataframes
 ko_sheets <- mk_header(ko_path,"E1:U1", "B2:D2", "B2:V1822", rm_sheets = c(1,2))
+ko_bwaves <- mk_header(ko_bwave_path,"E1:U1", "B2:D2", "B2:V1822", rm_sheets = c(1,2))
+
 wt_sheets <- mk_header(wt_path, "E1:R1", "B2:D2", "B2:R1822", rm_sheets = c(1,2))
+wt_bwaves <- mk_header(wt_bwave_path,"E1:U1", "B2:D2", "B2:V1822", rm_sheets = c(1,2))
 ```
 
 
@@ -153,6 +160,8 @@ one_header <- function(df, xl_path, rm_sheets, data_range) {
 #contructing final data frames
 ko_sheets <- one_header(ko_sheets, ko_path, c(1,2),"B2:V1822")
 head(ko_sheets)
+
+
 
 wt_sheets <- one_header(wt_sheets, wt_path, c(1,2),"B2:R1822" )
 head(wt_sheets)
