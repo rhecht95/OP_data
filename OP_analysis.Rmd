@@ -39,8 +39,16 @@ library(XML)
 
 
 
-# **Loading, Cleaning, and Tidying the Data**
+# **Introduction to the Data**
 
+The data used in this analysis is pulled from excel documents that are the output of a MatLab program. Data from the following excel documents are read into separate dataframes before being combined into 2 master dataframes, `wt_ko_sheets` and `wt_ko_bwaves` :
+
+- OP_KO_scotopic_mod1
+- b-trace_KO_scotopic
+- OP_WT_scotopic_mod1
+- b-trace_WT_scotopic
+
+# **Loading, Cleaning, and Tidying the Data**
 
 Setting path to Excel files as variables
 ```{r}
@@ -199,8 +207,12 @@ tidy_mouse <- function(df) {
   df
 }
 
+# Applying to all existing dataframes
 ko_sheets <- tidy_mouse(ko_sheets)
+ko_bwaves <- tidy_mouse(ko_bwaves)
+
 wt_sheets <- tidy_mouse(wt_sheets)
+wt_bwaves <- tidy_mouse(wt_bwaves)
 
 ```
 
@@ -210,6 +222,9 @@ Using `bind_rows` to preserve all columns
 ```{r}
 wt_ko_sheets <- bind_rows("ko_sheets" = ko_sheets, "wt_sheets" = wt_sheets, .id = "df_source")
 wt_ko_sheets
+
+wt_ko_bwaves <- bind_rows("ko_bwaves" = ko_bwaves, "wt_bwaves" = wt_bwaves, .id = "df_source")
+wt_ko_bwaves
 ```
 
 # **Building Function for Finding Local Maxima and Minima**
