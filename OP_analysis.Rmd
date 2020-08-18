@@ -62,7 +62,7 @@ wt_bwave_path <- "/Users/ryanhecht/RStudio/OP_data/data/b-trace_WT_scotopic.xlsx
 
 
 
-```{r echo=T, results='hide'}
+```{r echo=T, results='false'}
 #function for getting header information from continuous cells on the original excel spreadsheet
 #from_sheet specifies which sheet to take the headers from in case there is one sheet where the header values are not representative of the rest
 xl_header1 <- function(path, header_range, from_sheet) {
@@ -117,7 +117,7 @@ ko_sheets <- mk_header(ko_path,"E1:U1", "B2:D2", "B2:V1822", rm_sheets = c(1,2))
 ko_bwaves <- mk_header(ko_bwave_path,"E1:U1", "B2:D2", "B2:V1822", rm_sheets = c(1,2))
 
 wt_sheets <- mk_header(wt_path, "E1:R1", "B2:D2", "B2:R1822", rm_sheets = c(1,2))
-wt_bwaves <- mk_header(wt_bwave_path,"E1:U1", "B2:D2", "B2:V1822", rm_sheets = c(1,2))
+wt_bwaves <- mk_header(wt_bwave_path,"E1:R1", "B2:D2", "B2:R1822", rm_sheets = c(1,2))
 ```
 
 
@@ -157,13 +157,15 @@ one_header <- function(df, xl_path, rm_sheets, data_range) {
   xl_concat(xl_path, rm_sheets, data_range, final_header)
 }
 
-#contructing final data frames
+#contructing final data frames (OP data and B wave traces)
 ko_sheets <- one_header(ko_sheets, ko_path, c(1,2),"B2:V1822")
 head(ko_sheets)
-
-
+ko_bwaves <- one_header(ko_bwaves, ko_bwave_path, c(1,2),"B2:V1822")
+head(ko_bwaves)
 
 wt_sheets <- one_header(wt_sheets, wt_path, c(1,2),"B2:R1822" )
+head(wt_sheets)
+wt_bwaves <- one_header(wt_bwaves, wt_bwave_path, c(1,2),"B2:R1822" )
 head(wt_sheets)
 ```
 
