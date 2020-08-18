@@ -53,7 +53,7 @@ The data used in this analysis is pulled from excel documents that are the outpu
 Setting path to Excel files as variables
 ```{r}
 ko_path <- "data/OP_KO_scotopic_mod1.xlsx"
-ko_bwave_path <- "/Users/ryanhecht/RStudio/OP_data/data/b-trace_KO scotopic.xlsx"
+ko_bwave_path <- "/Users/ryanhecht/RStudio/OP_data/data/b-trace_KO_scotopic.xlsx"
   
 wt_path <- "data/OP_WT_scotopic_mod1.xlsx"
 wt_bwave_path <- "/Users/ryanhecht/RStudio/OP_data/data/b-trace_WT_scotopic.xlsx"
@@ -218,14 +218,20 @@ wt_bwaves <- tidy_mouse(wt_bwaves)
 
 ## Combining Tidy Data Frames Before Plotting
 
-Using `bind_rows` to preserve all columns
+**Using `bind_rows` to preserve all columns**
+
+Combined OP data
 ```{r}
 wt_ko_sheets <- bind_rows("ko_sheets" = ko_sheets, "wt_sheets" = wt_sheets, .id = "df_source")
 wt_ko_sheets
+```
 
+Combined b-wave data
+```{r}
 wt_ko_bwaves <- bind_rows("ko_bwaves" = ko_bwaves, "wt_bwaves" = wt_bwaves, .id = "df_source")
 wt_ko_bwaves
 ```
+
 
 # **Building Function for Finding Local Maxima and Minima**
 
@@ -288,7 +294,7 @@ mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, t
                   fixed_thead = T)
 
   if(result == "plot") {
-  print(mouse_plot)
+    return(mouse_plot)
   }
   if(result == "table"){
   print(OP_max)
@@ -302,7 +308,10 @@ mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, t
   }
   
   else {
-    print("Mouse has no recorded values")
+    #random blank plot with text
+    ggplot(mtcars, aes(wt, mpg)) +  
+      theme_minimal()+
+      annotate("Mouse has no recorded values")
   }
 }
 ```
@@ -313,10 +322,14 @@ mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, t
 ## Loop that iterates through all Sheets and Mice
 
 ```{r results='asis'}
-#These have been modified for loop testing purposes
+#Real sheets
 sheets <- as.character(unique(wt_ko_sheets$sheet))
 mice <- as.character(unique(wt_ko_sheets$mouse))
-#mice <- mice[!(mice %in% c("141", "113", "138", "145", "078"))]
+
+#test sheets
+# sheets <- as.character(c(-2.12, 0.6))
+# mice <- as.character(c("050", "051"))
+
 
 
 #for loop attempt 
@@ -324,7 +337,9 @@ for (i in sheets) {
   cat("  \n##", i, "{.tabset}", "  \n")
   for (j in mice) {
     cat("  \n###", "**Mouse: **", j, "  \n")
-    mouse_grapher(wt_ko_sheets, intensity = i , ms_code = j , span = 7, threshold = 0.575, time_window = 300, result = "plot")
+    p1 <- mouse_grapher(wt_ko_sheets, intensity = i , ms_code = j , span = 7, threshold = 0.575, time_window = 300, result = "plot")
+    p2 <- mouse_grapher(wt_ko_bwaves, intensity = i, ms_code = j, result = "plot", time_window = 899)
+    grid.arrange(p1,p2)
     cat("\n")
     as.data.frame(mouse_grapher(wt_ko_sheets, intensity = i , ms_code = j , span = 7, threshold = 0.575, time_window = 300, result = "table"))
   }
@@ -334,8 +349,12 @@ for (i in sheets) {
 ## Practice Threshold
 
 ```{r}
-mouse_grapher(wt_ko_sheets, intensity = "p0.6" , ms_code = "078" , span = 7, threshold = 0.575, time_window = 300, result = "plot")
 mouse_grapher(wt_ko_sheets, intensity = "p0.6" , ms_code = "078" , span = 7, threshold = 0.59, time_window = 300, result = "table")
+
+p3 <- mouse_grapher(wt_ko_sheets, intensity = "p0.6" , ms_code = "078" , span = 7, threshold = 0.575, time_window = 300, result = "plot")
+p4 <- mouse_grapher(wt_ko_bwaves, intensity = "p0.6", ms_code = "078", result = "plot", time_window = 899)
+
+grid.arrange(p3, p4)
 ```
 
 
