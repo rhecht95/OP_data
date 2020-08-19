@@ -273,6 +273,7 @@ mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, t
                angle = 90, check_overlap = TRUE, response.label.fmt = "i",
                span = span, ignore_threshold = threshold,
                alpha = 0.7))+
+     scale_y_continuous(expand = c(.2,.2))+
     facet_grid(~ eye, scales = "fixed", as.table = TRUE) +
     ggtitle(ms_code, subtitle = source_sheet)+
     theme_bw()+
@@ -298,7 +299,7 @@ mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, t
     return(mouse_plot)
   }
   if(result == "table"){
-  print(OP_max)
+    print(OP_max)
   }
   if(result == "both"){
     print(mouse_plot)
@@ -327,7 +328,7 @@ mouse_grapher <- function(df, intensity, ms_code, time_window = 500, span = 7, t
 
 ## Loop that iterates through all Sheets and Mice
 
-```{r results='asis'}
+```{r results='asis', fig.width= 10, fig.height= 7.5}
 #Real sheets
 sheets <- as.character(unique(wt_ko_sheets$sheet))
 mice <- as.character(unique(wt_ko_sheets$mouse))
@@ -345,7 +346,7 @@ for (i in sheets) {
     cat("  \n###", "**Mouse: **", j, "  \n")
     p1 <- mouse_grapher(wt_ko_sheets, intensity = i , ms_code = j , span = 7, threshold = 0.575, time_window = 300, result = "plot")
     p2 <- mouse_grapher(wt_ko_bwaves, intensity = i, ms_code = j, result = "plot", time_window = 899)
-    
+
     title1 <- textGrob("Oscillatory Potential", gp= gpar(fontface = "bold"))
     title2 <- textGrob("B-wave", gp= gpar(fontface = "bold"))
     grid.arrange(p1, p2,
@@ -359,14 +360,16 @@ for (i in sheets) {
 
 ## Practice Threshold
 
-```{r}
-# mouse_grapher(wt_ko_sheets, intensity = "p0.6" , ms_code = "078" , span = 7, threshold = 0.59, time_window = 300, result = "table")
-# 
+```{r, results = 'asis', fig.width= 10, fig.height= 7.5}
 # p3 <- mouse_grapher(wt_ko_sheets, intensity = -2.12 , ms_code = "078" , span = 7, threshold = 0.575, time_window = 300, result = "plot")
 # p4 <- mouse_grapher(wt_ko_bwaves, intensity = -2.12, ms_code = "078", result = "plot", time_window = 899)
 # 
-
-
+#     title1 <- textGrob("Oscillatory Potential", gp= gpar(fontface = "bold"))
+#     title2 <- textGrob("B-wave", gp= gpar(fontface = "bold"))
+#     grid.arrange(p3, p4,
+#              top = title1,
+#              bottom = title2)
+# mouse_grapher(wt_ko_sheets, intensity = -2.12 , ms_code = "078" , span = 7, threshold = 0.575, time_window = 300, result = "table")
 ```
 
 
